@@ -15,24 +15,6 @@ This project simulates a **Schwarzschild (non-rotating) black hole** using **Jav
 - Gravitational lensing of particles and background stars
 
 
-🧱 Website Structure (Industry-Level)
-cosmolab/
-├── index.html          ← MAIN LANDING PAGE
-├── black-hole/
-│   ├── index.html
-│   ├── app.js
-│   └── README.md
-├── gps-relativity/
-│   ├── index.html
-│   ├── app.js
-│   └── README.md
-├── assets/
-│   └── images/
-├── styles/
-│   └── main.css
-└── README.md           ← Platform-level README
----
-
 ## Features
 
 1. **Interactive Sliders**
