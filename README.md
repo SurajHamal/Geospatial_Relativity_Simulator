@@ -1,5 +1,5 @@
-Project: Geospatial Relativity Simulator
-Overview
+# Project: Geospatial Relativity Simulator 
+# Overview 
 A high-fidelity 3D orbital mechanics simulation built with Three.js and Vanilla JavaScript. This project focuses on the intersection of Astrodynamics and Special/General Relativity, specifically modeling the time-dilation effects experienced by GPS satellite constellations.
 
 Core Engineering Challenges
