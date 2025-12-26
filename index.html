@@ -2,87 +2,140 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CosmoLab | Interactive Science Simulations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventLoop Lab | Computational Physics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --glass: rgba(255, 255, 255, 0.02);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent: #ffffff; 
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0a0a0a;
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      background-image: 
+        radial-gradient(circle at 50% -20%, #1a1a2e 0%, #000 60%);
       color: white;
-      text-align: center;
+      -webkit-font-smoothing: antialiased;
     }
 
     header {
-      padding: 40px 20px;
+      padding: 100px 20px 60px;
+      text-align: center;
     }
 
     h1 {
-      font-size: 36px;
-      margin-bottom: 10px;
+      font-size: 64px;
+      font-weight: 700;
+      letter-spacing: -3px;
+      margin: 0;
+      color: #fff;
     }
 
     .subtitle {
-      color: #aaa;
+      color: rgba(255, 255, 255, 0.4);
       font-size: 18px;
+      font-weight: 300;
+      margin-top: 10px;
+      letter-spacing: 1px;
     }
 
     .container {
       display: flex;
       justify-content: center;
-      gap: 40px;
-      margin-top: 50px;
+      gap: 30px;
+      padding: 20px;
       flex-wrap: wrap;
     }
 
     .card {
-      background: #111;
-      border: 1px solid #333;
-      width: 300px;
-      padding: 25px;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255,255,255,0.05);
-      position: relative;
+      backdrop-filter: blur(30px);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      width: 400px;
+      padding: 40px;
+      border-radius: 32px;
+      transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .card:hover {
+      transform: translateY(-12px);
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
     }
 
     .card h2 {
-      margin-top: 0;
+      font-size: 22px;
+      margin: 25px 0 10px 0;
+      font-weight: 600;
     }
 
     .card p {
-      color: #bbb;
-      line-height: 1.4;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 14px;
+      line-height: 1.6;
+      height: 50px;
+      margin-bottom: 30px;
     }
 
     .card a {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 10px 20px;
-      background: #1e90ff;
-      color: white;
+      display: block;
+      width: 100%;
+      padding: 16px 0;
+      background: #fff;
+      color: #000;
+      text-align: center;
       text-decoration: none;
-      border-radius: 5px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: 0.3s;
     }
 
     .card a:hover {
-      background: #3aa0ff;
+      background: #444;
+      color: #fff;
     }
 
     .preview {
-      width: 280px;
-      height: 180px;
-      margin: 15px auto 0 auto;
-      cursor: grab;
-      border-radius: 8px;
-      border: 1px solid #333;
-      background: #000;
-      display: block;
+      width: 100%;
+      height: 240px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      overflow: hidden;
+    }
+
+    /* Skills Badges for Employers */
+    .skills {
+      margin-top: 80px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      padding: 6px 14px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 100px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.5);
     }
 
     footer {
-      margin-top: 60px;
-      padding: 20px;
-      color: #666;
-      font-size: 14px;
+      margin-top: 100px;
+      padding-bottom: 60px;
+      text-align: center;
+      color: rgba(255,255,255,0.2);
+      font-size: 10px;
+      letter-spacing: 3px;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/three@0.154.0/build/three.min.js"></script>
@@ -91,114 +144,83 @@
 <body>
 
 <header>
-  <h1>CosmoLab</h1>
-  <div class="subtitle">
-    Interactive science simulations that explain the universe<br>
-    Built by Suraj Hamal
-  </div>
+  <h1>EventLoop<span style="font-weight: 300; color: rgba(255,255,255,0.5);">Lab</span></h1>
+  <div class="subtitle">Computational Physics & Scientific Visualization</div>
 </header>
 
 <div class="container">
 
   <div class="card">
-    <h2>🌌 Black Hole Simulator</h2>
-    <p>Explore gravity, time dilation, and space-time curvature around a Schwarzschild black hole.</p>
     <div class="preview" id="bhPreview"></div>
-    <a href="black-hole-simulator/index.html">Launch Simulator</a>
+    <h2>Schwarzschild Dynamics</h2>
+    <p>Modeling gravitational lensing and photon sphere behavior around a non-rotating singularity.</p>
+    <a href="black-hole-simulator/index.html">Enter Simulation</a>
   </div>
 
   <div class="card">
-    <h2>🛰️ GPS Relativity Simulator</h2>
-    <p>Discover why Einstein’s relativity is required for GPS to work accurately on your phone.</p>
     <div class="preview" id="gpsPreview"></div>
-    <a href="gps-relativity/index.html">Launch Simulator</a>
+    <h2>Relativistic Geolocation</h2>
+    <p>Calculating time-dilation variances in MEO satellite constellations using Einstein's field equations.</p>
+    <a href="gps-relativity/index.html">Enter Simulation</a>
   </div>
 
 </div>
 
+<div class="skills">
+  <span class="badge">Three.js / WebGL</span>
+  <span class="badge">Vector Mathematics</span>
+  <span class="badge">JavaScript (ES6+)</span>
+  <span class="badge">Kinematics</span>
+  <span class="badge">Relativity Physics</span>
+</div>
+
 <footer>
-  More simulations coming soon • Physics made visual
+  DESIGNED & ENGINEERED BY SURAJ HAMAL • 2025
 </footer>
 
 <script>
-  // -------------------- Black Hole 3D Preview --------------------
-  const bhContainer = document.getElementById('bhPreview');
-  const bhScene = new THREE.Scene();
-  const bhCamera = new THREE.PerspectiveCamera(50, bhContainer.clientWidth/bhContainer.clientHeight, 0.1, 1000);
-  const bhRenderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
-  bhRenderer.setSize(bhContainer.clientWidth, bhContainer.clientHeight);
-  bhContainer.appendChild(bhRenderer.domElement);
+  // Shared Renderer Logic
+  const createScene = (id) => {
+    const container = document.getElementById(id);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    container.appendChild(renderer.domElement);
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableZoom = false;
+    controls.autoRotate = true;
+    return { scene, camera, renderer, controls };
+  };
 
-  // Orbit controls
-  const bhControls = new THREE.OrbitControls(bhCamera, bhRenderer.domElement);
-  bhControls.enableZoom = false;
-  bhControls.enablePan = false;
-  bhControls.enableDamping = true;
-  bhControls.dampingFactor = 0.05;
+  // Black Hole Preview
+  const bh = createScene('bhPreview');
+  const bhMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshBasicMaterial({color: 0x000}));
+  const disk = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.02, 16, 100), new THREE.MeshBasicMaterial({color: 0xff3300}));
+  disk.rotation.x = Math.PI/2;
+  bh.scene.add(bhMesh, disk);
+  bh.camera.position.z = 4;
 
-  // Black hole core
-  const bhGeometry = new THREE.SphereGeometry(1, 64, 64);
-  const bhMaterial = new THREE.MeshBasicMaterial({color: 0x000000});
-  const blackHole = new THREE.Mesh(bhGeometry, bhMaterial);
-  bhScene.add(blackHole);
+  // GPS Preview
+  const gps = createScene('gpsPreview');
+  const earth = new THREE.Mesh(
+    new THREE.SphereGeometry(1.2, 32, 32), 
+    new THREE.MeshStandardMaterial({map: new THREE.TextureLoader().load('https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg')})
+  );
+  const sun = new THREE.DirectionalLight(0xffffff, 2);
+  sun.position.set(5, 5, 5);
+  gps.scene.add(earth, sun, new THREE.AmbientLight(0x333333));
+  gps.camera.position.z = 4;
 
-  // Halo
-  const haloGeometry = new THREE.SphereGeometry(1.3, 64, 64);
-  const haloMaterial = new THREE.MeshBasicMaterial({color: 0xff5500, transparent: true, opacity: 0.4});
-  const halo = new THREE.Mesh(haloGeometry, haloMaterial);
-  bhScene.add(halo);
-
-  bhCamera.position.z = 5;
-
-  function animateBH() {
-    requestAnimationFrame(animateBH);
-    blackHole.rotation.y += 0.01;
-    halo.rotation.y -= 0.008;
-    bhControls.update();
-    bhRenderer.render(bhScene, bhCamera);
+  function animate() {
+    requestAnimationFrame(animate);
+    bh.controls.update();
+    gps.controls.update();
+    bh.renderer.render(bh.scene, bh.camera);
+    gps.renderer.render(gps.scene, gps.camera);
   }
-  animateBH();
-
-  // -------------------- GPS 3D Preview --------------------
-  const gpsContainer = document.getElementById('gpsPreview');
-  const gpsScene = new THREE.Scene();
-  const gpsCamera = new THREE.PerspectiveCamera(50, gpsContainer.clientWidth/gpsContainer.clientHeight, 0.1, 1000);
-  const gpsRenderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
-  gpsRenderer.setSize(gpsContainer.clientWidth, gpsContainer.clientHeight);
-  gpsContainer.appendChild(gpsRenderer.domElement);
-
-  const gpsControls = new THREE.OrbitControls(gpsCamera, gpsRenderer.domElement);
-  gpsControls.enableZoom = false;
-  gpsControls.enablePan = false;
-  gpsControls.enableDamping = true;
-  gpsControls.dampingFactor = 0.05;
-
-  // Earth
-  const earthGeometry = new THREE.SphereGeometry(1, 64, 64);
-  const earthTexture = new THREE.TextureLoader().load('https://upload.wikimedia.org/wikipedia/commons/9/97/The_Earth_seen_from_Apollo_17.jpg');
-  const earthMaterial = new THREE.MeshBasicMaterial({map: earthTexture});
-  const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-  gpsScene.add(earth);
-
-  // Satellite
-  const satGeometry = new THREE.SphereGeometry(0.05, 16, 16);
-  const satMaterial = new THREE.MeshBasicMaterial({color: 0xff0000});
-  const satellite = new THREE.Mesh(satGeometry, satMaterial);
-  gpsScene.add(satellite);
-
-  gpsCamera.position.z = 3;
-
-  let satAngle = 0;
-  function animateGPS() {
-    requestAnimationFrame(animateGPS);
-    earth.rotation.y += 0.005;
-    satAngle += 0.03;
-    satellite.position.x = Math.cos(satAngle) * 1.5;
-    satellite.position.z = Math.sin(satAngle) * 1.5;
-    gpsControls.update();
-    gpsRenderer.render(gpsScene, gpsCamera);
-  }
-  animateGPS();
+  animate();
 </script>
 
 </body>

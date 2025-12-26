@@ -1,5 +1,5 @@
 /**
- * @fileoverview Main Orchestration Engine - Earth-Moon System
+ * @fileoverview Main Orchestration Engine - EventLoop Lab
  * @author Suraj Hamal, Computer Scientist
  */
 
@@ -16,8 +16,10 @@ import { initCameraControls, updateCameraLimits } from './camera.js';
 // --- Global State ---
 let simulatedTime = new Date(); 
 let timeScale = 1000; 
-let trackingMode = 'EARTH'; // MODES: 'SUN', 'EARTH', 'MOON', 'SATELLITE'
-let activeSatIndex = 0; // Tracks which satellite to follow
+let trackingMode = 'EARTH'; 
+// focusTarget tracks what the UI is currently "detailed" on
+let focusTarget = { type: 'SYSTEM', index: null }; 
+let activeSatIndex = 0; 
 const clock = new THREE.Clock();
 
 // --- Helper Functions ---
@@ -50,19 +52,16 @@ renderer.toneMapping = THREE.ReinhardToneMapping;
 renderer.toneMappingExposure = 1.0;
 
 const controls = initCameraControls(camera, renderer.domElement);
-
 const textureLoader = new THREE.TextureLoader();
 
 // --- System Initialization ---
 createSpace(scene);
 
-// SUN & LIGHT SOURCE (Fixed)
 const sun = createSun();
 scene.add(sun); 
 const sunLight = new THREE.PointLight(0xffffff, 5, 0, 0); 
 scene.add(sunLight);
 
-// 1. Earth Heliocentric Orbit
 const earthOrbitPivot = new THREE.Group();
 scene.add(earthOrbitPivot);
 scene.add(createOrbitPath(15000, 0xffff00)); 
@@ -72,25 +71,15 @@ earthGroup.position.set(15000, 0, 0);
 earthGroup.rotation.z = PHYSICS.AXIAL_TILT_RADIANS;
 earthOrbitPivot.add(earthGroup);
 
-// 2. Moon Geocentric Orbit
 const moonMesh = createMoon(textureLoader);
 const moonOrbitPivot = new THREE.Group();
 moonOrbitPivot.rotation.z = PHYSICS.MOON_INCLINATION_RADIANS; 
 moonOrbitPivot.add(createOrbitPath(PHYSICS.MOON_DISTANCE_UNITS, 0xffffff));
-
-// Position the moon
 moonMesh.position.set(PHYSICS.MOON_DISTANCE_UNITS, 0, 0);
-
-/** * TIDAL LOCKING INITIALIZATION:
- * Rotate the mesh so the same face always points toward the center (Earth).
- * Depending on your texture, this is usually Math.PI / 2 or -Math.PI / 2.
- */
 moonMesh.rotation.y = Math.PI / 2; 
-
 moonOrbitPivot.add(moonMesh);
 earthGroup.add(moonOrbitPivot);
 
-// 3. GPS Satellites & Paths
 for (let i = 0; i < 6; i++) {
     const gpsPivot = new THREE.Group();
     gpsPivot.rotation.z = 0.96; 
@@ -101,36 +90,52 @@ for (let i = 0; i < 6; i++) {
 
 const satellites = createSatellites(earthGroup, textureLoader);
 
+// --- UI Interaction Logic ---
 const uiContainer = createUI({
-    onModeChange: (mode) => {
-        // If we click GPS while already in SATELLITE mode, go to the next one
-        if (mode === 'SATELLITE' && trackingMode === 'SATELLITE') {
-            activeSatIndex = (activeSatIndex + 1) % satellites.length;
-        } else {
-            activeSatIndex = 0; // Reset to first sat when switching from other bodies
-        }
+    // Triggered when a specific GPS unit is clicked in the list
+    onSelectGPS: (index) => {
+        focusTarget = { type: 'SATELLITE', index: index };
+        trackingMode = 'SATELLITE';
+        activeSatIndex = index;
+        updateCameraLimits(controls, 'SATELLITE');
 
+        const targetSat = satellites[index];
+        const satWorldPos = new THREE.Vector3();
+        targetSat.getWorldPosition(satWorldPos);
+
+        controls.target.copy(satWorldPos);
+        camera.position.set(satWorldPos.x + 20, satWorldPos.y + 10, satWorldPos.z + 20);
+        controls.update();
+    },
+    // Triggered for Earth, Moon, Sun
+    onModeChange: (mode) => {
+        focusTarget = { type: mode, index: null };
         trackingMode = mode;
         updateCameraLimits(controls, mode);
-
-        // SNAP CAMERA TO THE ACTIVE SATELLITE
-        if (mode === 'SATELLITE' && satellites && satellites[activeSatIndex]) {
-            const targetSat = satellites[activeSatIndex];
-            const satWorldPos = new THREE.Vector3();
-            targetSat.getWorldPosition(satWorldPos);
-
-            // Teleport camera target and position
-            controls.target.copy(satWorldPos);
-            camera.position.set(
-                satWorldPos.x + 15, // Closer offset for better detail
-                satWorldPos.y + 8,
-                satWorldPos.z + 15
-            );
-            controls.update();
+        
+        if (mode === 'SATELLITE') {
+            // Default to first satellite if clicking generic "SATELLITE" mode
+            focusTarget = { type: 'SATELLITE', index: 0 };
+            activeSatIndex = 0;
         }
     },
     onSpeedChange: (val) => { timeScale = val; },
     onReset: () => { simulatedTime = new Date(); }
+});
+
+/**
+ * BRIDGE: Listen for Custom Events from the UI
+ * This allows the HTML buttons inside the glass panels to talk back to Three.js
+ */
+window.addEventListener('selectGPS', (e) => {
+    // e.detail is the index of the satellite (0, 1, 2...)
+    uiContainer.callbacks.onSelectGPS(e.detail);
+});
+
+window.addEventListener('backToSystem', () => {
+    focusTarget = { type: 'SYSTEM', index: null };
+    trackingMode = 'EARTH';
+    updateCameraLimits(controls, 'EARTH');
 });
 
 // --- Main Simulation Loop ---
@@ -141,43 +146,33 @@ function animate() {
     const scaledDt = realDt * timeScale; 
     simulatedTime = new Date(simulatedTime.getTime() + (scaledDt * 1000));
 
-    // Heliocentric Revolution
+    // Orbital Mechanics
     earthOrbitPivot.rotation.y += (PHYSICS.EARTH_ORBIT_SPEED || 0.0000002) * scaledDt;
-
-    // Earth Rotation
     if (earth) earth.rotation.y += PHYSICS.EARTH_ROTATION_SPEED * scaledDt;
     if (clouds) clouds.rotation.y += (PHYSICS.EARTH_ROTATION_SPEED * 1.05) * scaledDt;
 
-    // Lunar Rotation
     if (moonOrbitPivot && moonMesh) {
-        // 1. The Pivot handles the Moon's position in orbit (Revolution)
-        const orbitalIncrement = PHYSICS.MOON_ORBIT_SPEED * scaledDt;
-        moonOrbitPivot.rotation.y += orbitalIncrement;
+        moonOrbitPivot.rotation.y += PHYSICS.MOON_ORBIT_SPEED * scaledDt;
     }
 
-// --- In app.js animate() ---
-const targetPos = new THREE.Vector3();
-
-if (trackingMode === 'SATELLITE' && satellites.length > 0) {
-    const currentSat = satellites[activeSatIndex];
-    if (currentSat) {
-        currentSat.getWorldPosition(targetPos);
+    // Camera Tracking Logic
+    const targetPos = new THREE.Vector3();
+    if (trackingMode === 'SATELLITE' && satellites.length > 0) {
+        satellites[activeSatIndex].getWorldPosition(targetPos);
+    } else if (trackingMode === 'MOON' && moonMesh) {
+        moonMesh.getWorldPosition(targetPos);
+    } else if (trackingMode === 'SUN') {
+        targetPos.set(0, 0, 0);
+    } else {
+        earth.getWorldPosition(targetPos);
     }
-} else if (trackingMode === 'MOON' && moonMesh) {
-    moonMesh.getWorldPosition(targetPos);
-} else if (trackingMode === 'SUN') {
-    targetPos.set(0, 0, 0);
-} else {
-    earth.getWorldPosition(targetPos);
-}
 
-// Keep a high lerp for satellites to avoid "lagging" behind them
-const followSpeed = (trackingMode === 'SATELLITE') ? 0.4 : 0.1;
-controls.target.lerp(targetPos, followSpeed);
+    const followSpeed = (trackingMode === 'SATELLITE') ? 0.4 : 0.1;
+    controls.target.lerp(targetPos, followSpeed);
 
-    // Updates
-    updateSatellites(satellites, scaledDt);
-    updateUI(uiContainer, satellites, simulatedTime, timeScale);
+    // Update Systems
+    updateSatellites(satellites, scaledDt, camera); // Pass camera for 3D labels
+    updateUI(uiContainer, satellites, simulatedTime, timeScale, focusTarget);
 
     controls.update();
     renderer.render(scene, camera);
