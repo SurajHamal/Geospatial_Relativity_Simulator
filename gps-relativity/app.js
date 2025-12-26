@@ -38,7 +38,7 @@ function createOrbitPath(radius, color = 0xffffff) {
 // --- Scene Initialization ---
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000000);
-camera.position.set(0, 400, 1000); 
+camera.position.set(15400, 100, 500); 
 
 const renderer = new THREE.WebGLRenderer({ 
     antialias: true,

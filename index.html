@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EventLoop Lab | Computational Physics</title>
+  <title>EventLoop Space | Computational Physics</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -110,7 +110,6 @@
       overflow: hidden;
     }
 
-    /* Skills Badges for Employers */
     .skills {
       margin-top: 80px;
       display: flex;
@@ -151,13 +150,6 @@
 <div class="container">
 
   <div class="card">
-    <div class="preview" id="bhPreview"></div>
-    <h2>Schwarzschild Dynamics</h2>
-    <p>Modeling gravitational lensing and photon sphere behavior around a non-rotating singularity.</p>
-    <a href="black-hole-simulator/index.html">Enter Simulation</a>
-  </div>
-
-  <div class="card">
     <div class="preview" id="gpsPreview"></div>
     <h2>Relativistic Geolocation</h2>
     <p>Calculating time-dilation variances in MEO satellite constellations using Einstein's field equations.</p>
@@ -179,9 +171,9 @@
 </footer>
 
 <script>
-  // Shared Renderer Logic
   const createScene = (id) => {
     const container = document.getElementById(id);
+    if (!container) return null; // Safety check
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
@@ -194,13 +186,16 @@
     return { scene, camera, renderer, controls };
   };
 
-  // Black Hole Preview
+  /* DISABLED FOR NOW: Black Hole Logic
   const bh = createScene('bhPreview');
-  const bhMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshBasicMaterial({color: 0x000}));
-  const disk = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.02, 16, 100), new THREE.MeshBasicMaterial({color: 0xff3300}));
-  disk.rotation.x = Math.PI/2;
-  bh.scene.add(bhMesh, disk);
-  bh.camera.position.z = 4;
+  if (bh) {
+    const bhMesh = new THREE.Mesh(new THREE.SphereGeometry(1, 32, 32), new THREE.MeshBasicMaterial({color: 0x000}));
+    const disk = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.02, 16, 100), new THREE.MeshBasicMaterial({color: 0xff3300}));
+    disk.rotation.x = Math.PI/2;
+    bh.scene.add(bhMesh, disk);
+    bh.camera.position.z = 4;
+  }
+  */
 
   // GPS Preview
   const gps = createScene('gpsPreview');
@@ -215,10 +210,18 @@
 
   function animate() {
     requestAnimationFrame(animate);
-    bh.controls.update();
-    gps.controls.update();
-    bh.renderer.render(bh.scene, bh.camera);
-    gps.renderer.render(gps.scene, gps.camera);
+    
+    // Updated animation loop to skip bh if disabled
+    if (gps) {
+        gps.controls.update();
+        gps.renderer.render(gps.scene, gps.camera);
+    }
+    
+    /* if (bh) {
+        bh.controls.update();
+        bh.renderer.render(bh.scene, bh.camera);
+    } 
+    */
   }
   animate();
 </script>
