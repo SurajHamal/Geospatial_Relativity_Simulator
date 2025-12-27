@@ -1,9 +1,11 @@
 /**
- * @fileoverview Main Orchestration Engine - EventLoop Lab
- * @author Suraj Hamal, Computer Scientist
+ * @fileoverview Main Orchestration Engine for Solar System Simulation
+ * EventLoop Lab - Simulates Earth, Moon, Sun, and satellites with realistic physics and UI.
+ * * Author: Suraj Hamal, Computer Scientist
+ * Date: 2025
  */
 
-import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js?module';
+import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
 import * as PHYSICS from './physics.js'; 
 import { createSpace } from './space.js';
 import { createSun } from './celestial/sun.js';
@@ -12,15 +14,19 @@ import { createMoon } from './celestial/moon.js';
 import { createSatellites, updateSatellites } from './entities/satellite.js';
 import { createUI, updateUI } from './ui.js';
 import { initCameraControls, updateCameraLimits } from './camera.js';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 
-// --- Global State ---
+// --- Global State Variables ---
 let simulatedTime = new Date(); 
-let timeScale = 1000; 
-let trackingMode = 'EARTH'; 
-// focusTarget tracks what the UI is currently "detailed" on
+let timeScale = 1;            
+let trackingMode = 'EARTH';      
 let focusTarget = { type: 'SYSTEM', index: null }; 
-let activeSatIndex = 0; 
-const clock = new THREE.Clock();
+let activeSatIndex = 0;          
+const clock = new THREE.Clock(); 
+
+// --- CLICK DETECTION GLOBALS ---
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
 // --- Helper Functions ---
 function createOrbitPath(radius, color = 0xffffff) {
@@ -41,24 +47,24 @@ const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerH
 camera.position.set(15400, 100, 500); 
 
 const renderer = new THREE.WebGLRenderer({ 
-    antialias: true,
-    logarithmicDepthBuffer: true 
+    antialias: true,            
+    logarithmicDepthBuffer: true  
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
-renderer.toneMapping = THREE.ReinhardToneMapping;
+renderer.toneMapping = THREE.ReinhardToneMapping; 
 renderer.toneMappingExposure = 1.0;
 
 const controls = initCameraControls(camera, renderer.domElement);
-const textureLoader = new THREE.TextureLoader();
+const textureLoader = new THREE.TextureLoader(); 
 
 // --- System Initialization ---
 createSpace(scene);
 
 const sun = createSun();
-scene.add(sun); 
+scene.add(sun);
 const sunLight = new THREE.PointLight(0xffffff, 5, 0, 0); 
 scene.add(sunLight);
 
@@ -68,8 +74,19 @@ scene.add(createOrbitPath(15000, 0xffff00));
 
 const { group: earthGroup, earth, clouds } = createEarthSystem(textureLoader);
 earthGroup.position.set(15000, 0, 0); 
-earthGroup.rotation.z = PHYSICS.AXIAL_TILT_RADIANS;
+earthGroup.rotation.z = PHYSICS.AXIAL_TILT_RADIANS; 
 earthOrbitPivot.add(earthGroup);
+
+const satelliteAnchor = new THREE.Group();
+satelliteAnchor.position.copy(earthGroup.position);
+earthOrbitPivot.add(satelliteAnchor);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.top = '0px';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.body.appendChild(labelRenderer.domElement);
 
 const moonMesh = createMoon(textureLoader);
 const moonOrbitPivot = new THREE.Group();
@@ -80,19 +97,9 @@ moonMesh.rotation.y = Math.PI / 2;
 moonOrbitPivot.add(moonMesh);
 earthGroup.add(moonOrbitPivot);
 
-for (let i = 0; i < 6; i++) {
-    const gpsPivot = new THREE.Group();
-    gpsPivot.rotation.z = 0.96; 
-    gpsPivot.rotation.y = (i * Math.PI) / 3; 
-    gpsPivot.add(createOrbitPath(415, 0x00ffff));
-    earthGroup.add(gpsPivot);
-}
+const satellites = createSatellites(satelliteAnchor, textureLoader);
 
-const satellites = createSatellites(earthGroup, textureLoader);
-
-// --- UI Interaction Logic ---
 const uiContainer = createUI({
-    // Triggered when a specific GPS unit is clicked in the list
     onSelectGPS: (index) => {
         focusTarget = { type: 'SATELLITE', index: index };
         trackingMode = 'SATELLITE';
@@ -107,14 +114,12 @@ const uiContainer = createUI({
         camera.position.set(satWorldPos.x + 20, satWorldPos.y + 10, satWorldPos.z + 20);
         controls.update();
     },
-    // Triggered for Earth, Moon, Sun
     onModeChange: (mode) => {
         focusTarget = { type: mode, index: null };
         trackingMode = mode;
         updateCameraLimits(controls, mode);
         
         if (mode === 'SATELLITE') {
-            // Default to first satellite if clicking generic "SATELLITE" mode
             focusTarget = { type: 'SATELLITE', index: 0 };
             activeSatIndex = 0;
         }
@@ -123,59 +128,58 @@ const uiContainer = createUI({
     onReset: () => { simulatedTime = new Date(); }
 });
 
-/**
- * BRIDGE: Listen for Custom Events from the UI
- * This allows the HTML buttons inside the glass panels to talk back to Three.js
- */
-window.addEventListener('selectGPS', (e) => {
-    // e.detail is the index of the satellite (0, 1, 2...)
-    uiContainer.callbacks.onSelectGPS(e.detail);
-});
-
+window.addEventListener('selectGPS', (e) => uiContainer.callbacks.onSelectGPS(e.detail));
 window.addEventListener('backToSystem', () => {
     focusTarget = { type: 'SYSTEM', index: null };
     trackingMode = 'EARTH';
     updateCameraLimits(controls, 'EARTH');
 });
 
-// --- Main Simulation Loop ---
 function animate() {
     requestAnimationFrame(animate);
     
-    const realDt = clock.getDelta();
-    const scaledDt = realDt * timeScale; 
+    const realDt = clock.getDelta();                 
+    const physicsDt = Math.min(realDt, 0.1);          
+    const scaledDt = physicsDt * (window.timeScale || 1000);          
+
     simulatedTime = new Date(simulatedTime.getTime() + (scaledDt * 1000));
 
-    // Orbital Mechanics
+        // --- Update the Time Display in UI ---
+    if (uiContainer && uiContainer.updateSimulatedTime) {
+        uiContainer.updateSimulatedTime(simulatedTime);
+    }
+
     earthOrbitPivot.rotation.y += (PHYSICS.EARTH_ORBIT_SPEED || 0.0000002) * scaledDt;
+
     if (earth) earth.rotation.y += PHYSICS.EARTH_ROTATION_SPEED * scaledDt;
     if (clouds) clouds.rotation.y += (PHYSICS.EARTH_ROTATION_SPEED * 1.05) * scaledDt;
 
-    if (moonOrbitPivot && moonMesh) {
-        moonOrbitPivot.rotation.y += PHYSICS.MOON_ORBIT_SPEED * scaledDt;
-    }
+    if (moonOrbitPivot && moonMesh) moonOrbitPivot.rotation.y += PHYSICS.MOON_ORBIT_SPEED * scaledDt;
 
-    // Camera Tracking Logic
+    satelliteAnchor.position.copy(earthGroup.position);
+    updateSatellites(satellites, scaledDt);
+
+    scene.updateMatrixWorld();
+
     const targetPos = new THREE.Vector3();
     if (trackingMode === 'SATELLITE' && satellites.length > 0) {
-        satellites[activeSatIndex].getWorldPosition(targetPos);
+        satellites[activeSatIndex]?.getWorldPosition(targetPos);
     } else if (trackingMode === 'MOON' && moonMesh) {
         moonMesh.getWorldPosition(targetPos);
     } else if (trackingMode === 'SUN') {
         targetPos.set(0, 0, 0);
-    } else {
+    } else if (earth) {
         earth.getWorldPosition(targetPos);
     }
 
-    const followSpeed = (trackingMode === 'SATELLITE') ? 0.4 : 0.1;
+    const followSpeed = (trackingMode === 'SATELLITE') ? 0.3 : 0.1;
     controls.target.lerp(targetPos, followSpeed);
 
-    // Update Systems
-    updateSatellites(satellites, scaledDt, camera); // Pass camera for 3D labels
     updateUI(uiContainer, satellites, simulatedTime, timeScale, focusTarget);
 
     controls.update();
     renderer.render(scene, camera);
+    labelRenderer.render(scene, camera); 
 }
 
 animate();
@@ -184,4 +188,26 @@ window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// --- CLICK DETECTION LISTENER ---
+window.addEventListener('click', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(satellites, true);
+
+    if (intersects.length > 0) {
+        let clickedObj = intersects[0].object;
+        while (clickedObj.parent && !clickedObj.userData.id) {
+            clickedObj = clickedObj.parent;
+        }
+
+        const index = satellites.indexOf(clickedObj);
+        if (index !== -1) {
+            uiContainer.callbacks.onSelectGPS(index);
+        }
+    }
 });

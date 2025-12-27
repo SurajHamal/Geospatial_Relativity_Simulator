@@ -88,7 +88,7 @@ export function createEarthSystem(textureLoader) {
         new THREE.MeshStandardMaterial({ 
             map: textureLoader.load('./assets/images/earth/earth_clouds.png'), 
             transparent: true, 
-            opacity: 0.3, 
+            opacity: 0.6, 
             depthWrite: false // Allows the viewer to see the continents through the clouds.
         })
     );
@@ -107,7 +107,7 @@ export function createEarthSystem(textureLoader) {
         // Earth's atmosphere observed from the Low Earth Orbit (LEO).
         color: 0x437ab3, 
         transparent: true, 
-        opacity: 0.25, 
+        opacity: 0.35, 
         // BACKSIDE RENDERING: We render the inner faces of the sphere. 
         // This creates the 'Limb Glow' effect where the atmosphere is 
         // thickest at the visual edges of the planet.

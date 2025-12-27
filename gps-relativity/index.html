@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PhysX | Orbital Relativity Lab</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.158.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.158.0/examples/jsm/"
+        }
+      }
+    </script>
     <style>
         :root {
             --glass-bg: rgba(15, 15, 20, 0.7);
@@ -19,6 +27,28 @@
             color: white;
             -webkit-font-smoothing: antialiased;
         }
+
+
+        .sat-label {
+            color: #ffffff;
+            font-family: 'monospace';
+            font-size: 12px;
+            padding: 2px 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 2px solid #00f2ff; /* We can change this color per satellite */
+            pointer-events: none; /* Allows mouse to click through the label */
+            white-space: nowrap;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Slider styles remain the same... */
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        /* ... (Keep your existing slider CSS here) ... */
 
         /* Modernized Custom Slider Styling */
         input[type=range] {
@@ -54,6 +84,7 @@
         input[type=range]:active::-webkit-slider-thumb {
             transform: scale(1.2);
         }
+
 
         /* Subtle loading state or credit info */
         #footer {
